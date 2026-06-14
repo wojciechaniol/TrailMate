@@ -2,6 +2,7 @@ package com.example.trailmate.model
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -51,11 +52,20 @@ class RoutesViewModel(
         }
     }
 
+    fun resetStopwatch(routeId: Int) {
+        viewModelScope.launch {
+            repository.resetStopwatch(routeId)
+        }
+    }
+
     fun addRoute(route: Route) {
         viewModelScope.launch {
             repository.insertRoute(route)
         }
     }
+
+    fun getRouteWithStopwatch(id: Int): Flow<RouteWithStopwatch> =
+        repository.getRouteWithStopwatch(id)
 
 //    fun deleteRoute(route: Route) {
 //        viewModelScope.launch {

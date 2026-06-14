@@ -1,5 +1,6 @@
 package com.example.trailmate.model
 
+import android.util.Log
 import com.example.trailmate.data.DataSource
 import kotlinx.coroutines.flow.Flow
 
@@ -10,8 +11,18 @@ class Repository(private val routeDao: RouteDao) {
     fun getRouteWithStopwatch(routeId: Int): Flow<RouteWithStopwatch> =
         routeDao.getRouteWithStopwatch(routeId)
 
-    suspend fun insertRoute(route: Route) =
-        routeDao.insertRoute(route)
+    suspend fun insertRoute(route: Route) {
+        val routeId = routeDao.insertRoute(route).toInt()
+
+        routeDao.upsertStopwatch(
+            Stopwatch(
+                routeId = routeId,
+                startTime = System.currentTimeMillis(),
+                elapsedMs = 0L,
+                isRunning = false
+            )
+        )
+    }
 
     suspend fun startStopwatch(routeId: Int, startTime: Long) {
         val existing: Stopwatch = routeDao.getStopwatch(routeId)
@@ -27,9 +38,25 @@ class Repository(private val routeDao: RouteDao) {
         )
     }
 
+    suspend fun resetStopwatch(routeId: Int) {
+        val existing = routeDao.getStopwatch(routeId)
+        routeDao.upsertStopwatch(
+            existing.copy(elapsedMs = 0L, isRunning = false)
+        )
+    }
+
     suspend fun seedIfEmpty() {
         if (routeDao.getCount() == 0) {
-            routeDao.insertAll(DataSource.Routes)
+            val routes = DataSource.Routes
+            routes.forEach { route ->
+                val routeId = routeDao.insertRoute(route).toInt()
+                routeDao.upsertStopwatch(
+                    Stopwatch(
+                        routeId = routeId,
+                        startTime = System.currentTimeMillis()
+                    )
+                )
+            }
         }
     }
 }

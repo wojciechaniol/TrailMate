@@ -12,11 +12,12 @@ import com.example.trailmate.model.RoutesViewModel
 @Composable
 fun CyclingScreen(
     modifier: Modifier = Modifier,
-    viewModel: RoutesViewModel
+    viewModel: RoutesViewModel,
+    searchQuery: String = "",
+    onRouteClick: (Int) -> Unit
 ) {
     val cyclingRoutes by viewModel.cyclingRoutes.collectAsStateWithLifecycle()
+    val filtered = cyclingRoutes.filter { it.name.contains(searchQuery, ignoreCase = true) }
 
-    LazyColumn() {
-        items(cyclingRoutes) { route -> Text(route.name) }
-    }
+    GridWithTrails(filtered, 0xFF5B8DD9, onRouteClick = onRouteClick)
 }

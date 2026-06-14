@@ -47,17 +47,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.trailmate.model.RoutesViewModel
 import com.example.trailmate.ui.AddRouteScreen
 import com.example.trailmate.ui.CyclingScreen
 import com.example.trailmate.ui.MainScreen
 import com.example.trailmate.ui.RunningScreen
 import com.example.trailmate.ui.WalkingScreen
+import com.example.trailmate.ui.DetailsScreen
 import kotlinx.coroutines.launch
 
 enum class RoutesScreen(val title: String) {
@@ -65,7 +69,8 @@ enum class RoutesScreen(val title: String) {
     Running(title = "Running"),
     Cycling(title = "Cycling"),
     Walking(title = "Walking"),
-    AddRoute(title = "Adding")
+    AddRoute(title = "Adding"),
+    Details(title="Details")
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -202,13 +207,18 @@ fun RoutesApp(
 
     val backStackEntry by navController.currentBackStackEntryAsState()
     val isOnAddRoute = backStackEntry?.destination?.route == RoutesScreen.AddRoute.name
+    val isOnDetails = backStackEntry?.destination?.route?.startsWith(RoutesScreen.Details.name) == true
     val currentScreen = tabs[pagerState.currentPage]
 
     var searchQuery by rememberSaveable { mutableStateOf("") }
 
+    val onRouteClick: (Int) -> Unit = { routeId ->
+        navController.navigate("${RoutesScreen.Details.name}/$routeId")
+    }
+
     Scaffold(
         topBar = {
-            if (!isOnAddRoute) {
+            if (!isOnAddRoute && !isOnDetails) {
                 RoutesTopBar(
                     currentScreen = currentScreen,
                     onNavigate = { screen ->
@@ -248,10 +258,22 @@ fun RoutesApp(
                     modifier = Modifier.fillMaxSize()
                 ) { page ->
                     when (tabs[page]) {
-                        RoutesScreen.Start    -> MainScreen(viewModel = viewModel)
-                        RoutesScreen.Walking  -> WalkingScreen(viewModel = viewModel)
-                        RoutesScreen.Running  -> RunningScreen(viewModel = viewModel)
-                        RoutesScreen.Cycling  -> CyclingScreen(viewModel = viewModel)
+                        RoutesScreen.Start    -> MainScreen(
+                            viewModel = viewModel,
+                            searchQuery = searchQuery,
+                            onRouteClick = onRouteClick)
+                        RoutesScreen.Walking  -> WalkingScreen(
+                            viewModel = viewModel,
+                            searchQuery = searchQuery,
+                            onRouteClick = onRouteClick)
+                        RoutesScreen.Running  -> RunningScreen(
+                            viewModel = viewModel,
+                            searchQuery = searchQuery,
+                            onRouteClick = onRouteClick)
+                        RoutesScreen.Cycling  -> CyclingScreen(
+                            viewModel = viewModel,
+                            searchQuery = searchQuery,
+                            onRouteClick = onRouteClick)
                         else                  -> {}
                     }
                 }
@@ -262,6 +284,29 @@ fun RoutesApp(
                     onRouteAdded = { navController.popBackStack() },
                     onCancel = { navController.popBackStack() }
                 )
+            }
+
+            composable(
+                route = "${RoutesScreen.Details.name}/{routeId}",
+                arguments = listOf(navArgument("routeId") { type = NavType.IntType })
+            ) { backStackEntry ->
+                val routeId = backStackEntry.arguments?.getInt("routeId") ?: return@composable
+                val routeWithStopwatch by viewModel
+                    .getRouteWithStopwatch(routeId)
+                    .collectAsStateWithLifecycle(null)
+
+                routeWithStopwatch?.let {
+                    DetailsScreen(
+                        route = it.route,
+                        stopwatch = it.stopwatch,
+                        onStart  = { viewModel.startStopwatch(routeId) },
+                        onStop = { it.stopwatch.let { sw ->
+                            viewModel.pauseStopwatch(routeId, sw.currentElapsedMs)
+                        }},
+                        onReset  = { viewModel.resetStopwatch(routeId) },
+                        onBack   = { navController.popBackStack() }
+                    )
+                }
             }
         }
     }

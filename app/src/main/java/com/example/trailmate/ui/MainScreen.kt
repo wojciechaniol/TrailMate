@@ -1,6 +1,7 @@
 package com.example.trailmate.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,19 +33,28 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.trailmate.model.Route
 import com.example.trailmate.model.RoutesViewModel
 
+private fun List<Route>.filterByQuery(query: String) =
+    filter { it.name.contains(query, ignoreCase = true) }
+
 @Composable
 fun MainScreen(
     modifier: Modifier = Modifier,
-    viewModel: RoutesViewModel
+    viewModel: RoutesViewModel,
+    searchQuery: String = "",
+    onRouteClick: (Int) -> Unit
 ) {
     val walkingRoutes by viewModel.walkingRoutes.collectAsStateWithLifecycle()
     val cyclingRoutes by viewModel.cyclingRoutes.collectAsStateWithLifecycle()
     val runningRoutes by viewModel.runningRoutes.collectAsStateWithLifecycle()
 
+    val filteredWalking = walkingRoutes.filterByQuery(searchQuery)
+    val filteredRunning = runningRoutes.filterByQuery(searchQuery)
+    val filteredCycling = cyclingRoutes.filterByQuery(searchQuery)
+
     val sections = listOf(
-        Triple("Walking",  walkingRoutes,  Color(0xFF4CAF82)),
-        Triple("Running",  runningRoutes,  Color(0xFFE8734A)),
-        Triple("Cycling",  cyclingRoutes,  Color(0xFF5B8DD9)),
+        Triple("Walking",  filteredWalking,  Color(0xFF4CAF82)),
+        Triple("Running",  filteredRunning,  Color(0xFFE8734A)),
+        Triple("Cycling",  filteredCycling,  Color(0xFF5B8DD9)),
     )
 
     LazyColumn(
@@ -59,7 +69,8 @@ fun MainScreen(
                 RouteSection(
                     title = title,
                     routes = routes,
-                    accentColor = accentColor
+                    accentColor = accentColor,
+                    onRouteClick = onRouteClick
                 )
             }
         }
@@ -70,7 +81,8 @@ fun MainScreen(
 fun RouteSection(
     title: String,
     routes: List<Route>,
-    accentColor: Color
+    accentColor: Color,
+    onRouteClick: (Int) -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(
@@ -81,7 +93,7 @@ fun RouteSection(
 
         if (routes.isEmpty()) {
             Text(
-                text = "No routes yet — tap + to add one.",
+                text = "No routes",
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color.Gray,
                 modifier = Modifier.padding(horizontal = 16.dp)
@@ -92,7 +104,11 @@ fun RouteSection(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(routes) { route ->
-                    RouteCard(route = route, accentColor = accentColor)
+                    RouteCard(
+                        route = route,
+                        accentColor = accentColor,
+                        onClick = onRouteClick
+                    )
                 }
             }
         }
@@ -102,12 +118,14 @@ fun RouteSection(
 @Composable
 fun RouteCard(
     route: Route,
-    accentColor: Color
+    accentColor: Color,
+    onClick: (Int) -> Unit = {}
 ) {
     Card(
         modifier = Modifier
             .width(200.dp)
-            .wrapContentHeight(),
+            .wrapContentHeight()
+            .clickable { onClick(route.id) },
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
