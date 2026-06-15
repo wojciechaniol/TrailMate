@@ -49,6 +49,7 @@ dependencies {
     //Room
     implementation("androidx.room:room-runtime:2.8.4")
     implementation("androidx.compose.material3:material3:1.4.0")
+    implementation("androidx.compose.foundation:foundation-layout:1.11.2")
     ksp("androidx.room:room-compiler:2.8.4")
     implementation("androidx.room:room-ktx:2.8.4")
     implementation(platform("androidx.compose:compose-bom:2026.05.01"))
@@ -62,6 +63,7 @@ dependencies {
     implementation("androidx.core:core-ktx:1.19.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.10.0")
     implementation("androidx.navigation:navigation-compose:2.9.8")
+    implementation("io.coil-kt:coil-compose:2.7.0")
 
     debugImplementation("androidx.compose.ui:ui-test-manifest")
     debugImplementation("androidx.compose.ui:ui-tooling")

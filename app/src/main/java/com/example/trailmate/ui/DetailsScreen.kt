@@ -37,9 +37,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import com.example.trailmate.model.Route
 import com.example.trailmate.model.Stopwatch
 import com.example.trailmate.model.Type
@@ -84,6 +86,15 @@ fun DetailsScreen(
                 .height(220.dp)
                 .background(accentColor)
         ) {
+            if (route.imagePath != null) {
+                AsyncImage(
+                    model = route.imagePath,
+                    contentDescription = "Route photo",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            }
+            
             IconButton(
                 onClick = onBack,
                 modifier = Modifier

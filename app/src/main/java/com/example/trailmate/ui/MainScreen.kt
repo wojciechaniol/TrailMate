@@ -1,5 +1,6 @@
 package com.example.trailmate.ui
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -26,10 +27,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.compose.AsyncImage
 import com.example.trailmate.model.Route
 import com.example.trailmate.model.RoutesViewModel
 
@@ -131,7 +134,6 @@ fun RouteCard(
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Column {
-            // Coloured banner acts as the "photo" placeholder
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -139,9 +141,20 @@ fun RouteCard(
                     .background(accentColor),
                 contentAlignment = Alignment.BottomStart
             ) {
+                if (route.imagePath != null) {
+                    AsyncImage(
+                        model = route.imagePath,
+                        contentDescription = "Route photo",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+
                 Surface(
-                    shape = RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp,
-                        bottomEnd = 6.dp, bottomStart = 0.dp),
+                    shape = RoundedCornerShape(
+                        topStart = 0.dp, topEnd = 0.dp,
+                        bottomEnd = 6.dp, bottomStart = 0.dp
+                    ),
                     color = Color.Black.copy(alpha = 0.25f)
                 ) {
                     Text(

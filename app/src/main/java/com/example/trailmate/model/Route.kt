@@ -22,5 +22,6 @@ data class Route(
     val desc: String,
     val length: Double,
     val difficulty: Difficulty,
-    val typeOfRoute: Type
+    val typeOfRoute: Type,
+    val imagePath: String? = null
 )
