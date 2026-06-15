@@ -1,6 +1,7 @@
 package com.example.trailmate.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -16,6 +19,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ZoomIn
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -33,6 +38,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,6 +48,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
 import com.example.trailmate.model.Route
 import com.example.trailmate.model.Stopwatch
@@ -74,6 +83,15 @@ fun DetailsScreen(
         }
     }
 
+    var showFullScreenImage by rememberSaveable { mutableStateOf(false) }
+
+    if (showFullScreenImage && route.imagePath != null) {
+        FullScreenImageViewer(
+            imagePath = route.imagePath,
+            onDismiss = { showFullScreenImage = false }
+        )
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -85,6 +103,11 @@ fun DetailsScreen(
                 .fillMaxWidth()
                 .height(220.dp)
                 .background(accentColor)
+                .then(
+                    if (route.imagePath != null)
+                        Modifier.clickable { showFullScreenImage = true }
+                    else Modifier
+                )
         ) {
             if (route.imagePath != null) {
                 AsyncImage(
@@ -93,8 +116,18 @@ fun DetailsScreen(
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
                 )
+
+                Icon(
+                    imageVector = Icons.Default.ZoomIn,
+                    contentDescription = "Tap the image to zoom in",
+                    tint = Color.White,
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(12.dp)
+                        .background(Color.Black.copy(alpha = 0.25f), shape = CircleShape)
+                )
             }
-            
+
             IconButton(
                 onClick = onBack,
                 modifier = Modifier
@@ -228,4 +261,49 @@ private fun formatElapsed(ms: Long): String {
     val seconds = totalSeconds % 60
     return if (hours > 0) "%02d:%02d:%02d".format(hours, minutes, seconds)
     else "%02d:%02d".format(minutes, seconds)
+}
+
+@Composable
+private fun FullScreenImageViewer(
+    imagePath: String,
+    onDismiss: () -> Unit
+) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false
+        )
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.92f))
+                .clickable(onClick = onDismiss),
+            contentAlignment = Alignment.Center
+        ) {
+            AsyncImage(
+                model = imagePath,
+                contentDescription = "Full screen route photo",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+                    .clickable(onClick = onDismiss),
+                contentScale = ContentScale.Fit
+            )
+
+            IconButton(
+                onClick = onDismiss,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(16.dp)
+                    .background(Color.White.copy(alpha = 0.15f), shape = CircleShape)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "Close",
+                    tint = Color.White
+                )
+            }
+        }
+    }
 }
