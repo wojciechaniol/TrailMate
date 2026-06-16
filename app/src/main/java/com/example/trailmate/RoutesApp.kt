@@ -57,6 +57,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.trailmate.model.RoutesViewModel
+import com.example.trailmate.ui.AboutScreen
 import com.example.trailmate.ui.AddRouteScreen
 import com.example.trailmate.ui.CyclingScreen
 import com.example.trailmate.ui.MainScreen
@@ -73,7 +74,8 @@ enum class RoutesScreen(val title: String) {
     Walking(title = "Walking"),
     AddRoute(title = "Adding"),
     Details(title="Details"),
-    Settings(title="Settings")
+    Settings(title="Settings"),
+    About(title="About")
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -82,6 +84,7 @@ fun RoutesTopBar(
     currentScreen: RoutesScreen,
     onNavigate: (RoutesScreen) -> Unit,
     onSettingsClick: () -> Unit,
+    onAboutClick: () -> Unit,
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit
 ) {
@@ -126,7 +129,10 @@ fun RoutesTopBar(
                     )
                     DropdownMenuItem(
                         text = { Text("About") },
-                        onClick = { menuExpanded = false },
+                        onClick = {
+                            menuExpanded = false
+                            onAboutClick()
+                        },
                         leadingIcon = { Icon(Icons.Default.Info, null) }
                     )
                 }
@@ -216,6 +222,7 @@ fun RoutesApp(
     val isOnAddRoute = backStackEntry?.destination?.route == RoutesScreen.AddRoute.name
     val isOnDetails = backStackEntry?.destination?.route?.startsWith(RoutesScreen.Details.name) == true
     val isOnSettings = backStackEntry?.destination?.route == RoutesScreen.Settings.name
+    val isOnAbout = backStackEntry?.destination?.route == RoutesScreen.About.name
     val currentScreen = tabs[pagerState.currentPage]
 
     var searchQuery by rememberSaveable { mutableStateOf("") }
@@ -226,7 +233,7 @@ fun RoutesApp(
 
     Scaffold(
         topBar = {
-            if (!isOnAddRoute && !isOnDetails && !isOnSettings) {
+            if (!isOnAddRoute && !isOnDetails && !isOnSettings && !isOnAbout) {
                 RoutesTopBar(
                     currentScreen = currentScreen,
                     onNavigate = { screen ->
@@ -238,13 +245,14 @@ fun RoutesApp(
                         }
                     },
                     onSettingsClick = { navController.navigate(RoutesScreen.Settings.name) },
+                    onAboutClick = { navController.navigate(RoutesScreen.About.name) },
                     searchQuery = searchQuery,
                     onSearchQueryChange = { searchQuery = it }
                 )
             }
         },
         floatingActionButton = {
-            if (!isOnSettings) {
+            if (!isOnSettings && !isOnAbout) {
                 FloatingActionButton(
                     onClick = { navController.navigate(RoutesScreen.AddRoute.name) }
                 ) {
@@ -324,6 +332,12 @@ fun RoutesApp(
                 SettingsScreen(
                     isDarkTheme = isDarkTheme,
                     onToggleTheme = onToggleTheme,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+
+            composable(route = RoutesScreen.About.name) {
+                AboutScreen(
                     onBack = { navController.popBackStack() }
                 )
             }
