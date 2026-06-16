@@ -18,19 +18,20 @@ import androidx.core.view.WindowCompat
 private val DarkColorScheme = darkColorScheme(
     primary = primary_dark,
     secondary = secondary_dark,
+    surfaceVariant = surface_variant_dark,
     tertiary = tertiary_dark
 )
 
 private val LightColorScheme = lightColorScheme(
     primary = primary_light,
     secondary = secondary_light,
+    surfaceVariant = surface_variant_light,
     tertiary = tertiary_light
 )
 
 @Composable
-fun CoursesTheme(
+fun TrailMateTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {

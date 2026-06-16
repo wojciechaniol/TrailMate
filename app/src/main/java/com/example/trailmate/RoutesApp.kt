@@ -35,6 +35,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -62,6 +63,7 @@ import com.example.trailmate.ui.MainScreen
 import com.example.trailmate.ui.RunningScreen
 import com.example.trailmate.ui.WalkingScreen
 import com.example.trailmate.ui.DetailsScreen
+import com.example.trailmate.ui.SettingsScreen
 import kotlinx.coroutines.launch
 
 enum class RoutesScreen(val title: String) {
@@ -70,7 +72,8 @@ enum class RoutesScreen(val title: String) {
     Cycling(title = "Cycling"),
     Walking(title = "Walking"),
     AddRoute(title = "Adding"),
-    Details(title="Details")
+    Details(title="Details"),
+    Settings(title="Settings")
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -78,6 +81,7 @@ enum class RoutesScreen(val title: String) {
 fun RoutesTopBar(
     currentScreen: RoutesScreen,
     onNavigate: (RoutesScreen) -> Unit,
+    onSettingsClick: () -> Unit,
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit
 ) {
@@ -114,7 +118,10 @@ fun RoutesTopBar(
                 ) {
                     DropdownMenuItem(
                         text = { Text("Settings") },
-                        onClick = { menuExpanded = false },
+                        onClick = {
+                            menuExpanded = false
+                            onSettingsClick()
+                        },
                         leadingIcon = { Icon(Icons.Default.Settings, null) }
                     )
                     DropdownMenuItem(
@@ -134,7 +141,6 @@ fun RoutesTopBar(
                 textAlign = TextAlign.Center
             )
 
-            // Search toggle
             IconButton(onClick = {
                 searchVisible = !searchVisible
                 if (!searchVisible) onSearchQueryChange("")
@@ -165,10 +171,9 @@ fun RoutesTopBar(
             )
         }
 
-        ScrollableTabRow(
+        TabRow(
             selectedTabIndex = navTabs.indexOfFirst { it.first == currentScreen }
                 .coerceAtLeast(0),
-            edgePadding = 8.dp,
             divider = {}
         ) {
             navTabs.forEach { (screen, label) ->
@@ -193,6 +198,8 @@ fun RoutesTopBar(
 @Composable
 fun RoutesApp(
     viewModel: RoutesViewModel,
+    isDarkTheme: Boolean,
+    onToggleTheme: () -> Unit,
     navController: NavHostController = rememberNavController()
 ) {
     val tabs = listOf(
@@ -208,6 +215,7 @@ fun RoutesApp(
     val backStackEntry by navController.currentBackStackEntryAsState()
     val isOnAddRoute = backStackEntry?.destination?.route == RoutesScreen.AddRoute.name
     val isOnDetails = backStackEntry?.destination?.route?.startsWith(RoutesScreen.Details.name) == true
+    val isOnSettings = backStackEntry?.destination?.route == RoutesScreen.Settings.name
     val currentScreen = tabs[pagerState.currentPage]
 
     var searchQuery by rememberSaveable { mutableStateOf("") }
@@ -218,7 +226,7 @@ fun RoutesApp(
 
     Scaffold(
         topBar = {
-            if (!isOnAddRoute && !isOnDetails) {
+            if (!isOnAddRoute && !isOnDetails && !isOnSettings) {
                 RoutesTopBar(
                     currentScreen = currentScreen,
                     onNavigate = { screen ->
@@ -229,19 +237,22 @@ fun RoutesApp(
                             }
                         }
                     },
+                    onSettingsClick = { navController.navigate(RoutesScreen.Settings.name) },
                     searchQuery = searchQuery,
                     onSearchQueryChange = { searchQuery = it }
                 )
             }
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = { navController.navigate(RoutesScreen.AddRoute.name) }
-            ) {
-                Icon(
-                    Icons.Default.Add,
-                    contentDescription = "Add route"
-                )
+            if (!isOnSettings) {
+                FloatingActionButton(
+                    onClick = { navController.navigate(RoutesScreen.AddRoute.name) }
+                ) {
+                    Icon(
+                        Icons.Default.Add,
+                        contentDescription = "Add route"
+                    )
+                }
             }
         }
     ) { innerPadding ->
@@ -307,6 +318,14 @@ fun RoutesApp(
                         onBack   = { navController.popBackStack() }
                     )
                 }
+            }
+
+            composable(route = RoutesScreen.Settings.name) {
+                SettingsScreen(
+                    isDarkTheme = isDarkTheme,
+                    onToggleTheme = onToggleTheme,
+                    onBack = { navController.popBackStack() }
+                )
             }
         }
     }

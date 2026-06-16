@@ -6,6 +6,10 @@ val primary_dark = Color(0xFFD0BCFF)
 val secondary_dark = Color(0xFFCCC2DC)
 val tertiary_dark = Color(0xFFEFB8C8)
 
+val surface_variant_light = Color(0xFFF3EDF7)
+
 val primary_light = Color(0xFF6650a4)
 val secondary_light = Color(0xFF625b71)
 val tertiary_light = Color(0xFF7D5260)
+
+val surface_variant_dark = Color(0xFF2B2930)
