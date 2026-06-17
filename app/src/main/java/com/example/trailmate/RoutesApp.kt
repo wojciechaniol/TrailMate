@@ -1,6 +1,7 @@
 package com.example.trailmate
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -269,7 +270,19 @@ fun RoutesApp(
             startDestination = RoutesScreen.Start.name,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
+                .padding(innerPadding),
+            enterTransition = {
+                fadeIn(animationSpec = tween(200))
+            },
+            exitTransition = {
+                fadeOut(animationSpec = tween(200))
+            },
+            popEnterTransition = {
+                fadeIn(animationSpec = tween(200))
+            },
+            popExitTransition = {
+                fadeOut(animationSpec = tween(200))
+            }
         ) {
             composable(route = RoutesScreen.Start.name) {
                 HorizontalPager(

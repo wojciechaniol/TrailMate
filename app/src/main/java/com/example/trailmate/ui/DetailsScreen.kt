@@ -1,5 +1,15 @@
 package com.example.trailmate.ui
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -43,7 +53,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PaintingStyle.Companion.Stroke
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -202,14 +216,10 @@ fun DetailsScreen(
                         )
                     )
 
-                    Text(
-                        text = formatElapsed(displayMs),
-                        style = MaterialTheme.typography.displayMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            fontFamily = FontFamily.Monospace
-                        ),
-                        color = if (stopwatch.isRunning) accentColor
-                        else Color.DarkGray
+                    StopwatchDisplay(
+                        displayMs = displayMs,
+                        isRunning = stopwatch.isRunning,
+                        accentColor = accentColor
                     )
 
                     Row(
@@ -252,6 +262,128 @@ private fun Badge(label: String) {
             color = Color.White,
             modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
         )
+    }
+}
+
+@Composable
+fun StopwatchDisplay(
+    displayMs: Long,
+    isRunning: Boolean,
+    accentColor: Color
+) {
+    val totalSeconds = (displayMs / 1000).toInt()
+    val progress = (totalSeconds % 60) / 60f
+
+    val animatedProgress by animateFloatAsState(
+        targetValue = progress,
+        animationSpec = tween(durationMillis = 900, easing = LinearEasing),
+        label = "ring_progress"
+    )
+
+    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
+    val pulseScale by infiniteTransition.animateFloat(
+        initialValue = 0.92f,
+        targetValue = 1.08f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "pulse_scale"
+    )
+    val pulseAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.6f,
+        targetValue = 0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "pulse_alpha"
+    )
+
+    val dotScale by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 1.3f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 500, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "dot_scale"
+    )
+    val dotAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.25f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 500, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "dot_alpha"
+    )
+
+    val surfaceVariant = MaterialTheme.colorScheme.surfaceVariant
+    val timeColor by animateColorAsState(
+        targetValue = if (isRunning) accentColor
+        else MaterialTheme.colorScheme.onSurface,
+        animationSpec = tween(400),
+        label = "time_color"
+    )
+
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier.size(180.dp)
+    ) {
+        if (isRunning) {
+            Canvas(modifier = Modifier.size(180.dp)) {
+                drawCircle(
+                    color = accentColor.copy(alpha = pulseAlpha),
+                    radius = (size.minDimension / 2) * pulseScale,
+                    style = Stroke(width = 2.dp.toPx())
+                )
+            }
+        }
+
+        Canvas(modifier = Modifier.size(180.dp)) {
+            val stroke = 6.dp.toPx()
+            val radius = (size.minDimension - stroke) / 2
+
+            drawCircle(
+                color = surfaceVariant,
+                radius = radius,
+                style = Stroke(width = stroke, cap = StrokeCap.Round)
+            )
+
+            if (animatedProgress > 0f) {
+                drawArc(
+                    color = accentColor,
+                    startAngle = -90f,
+                    sweepAngle = 360f * animatedProgress,
+                    useCenter = false,
+                    style = Stroke(width = stroke, cap = StrokeCap.Round)
+                )
+            }
+        }
+
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Text(
+                text = formatElapsed(displayMs),
+                style = MaterialTheme.typography.displaySmall.copy(
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = FontFamily.Monospace
+                ),
+                color = timeColor
+            )
+
+            if (isRunning) {
+                Box(
+                    modifier = Modifier
+                        .size(7.dp * dotScale)
+                        .clip(CircleShape)
+                        .background(accentColor.copy(alpha = dotAlpha))
+                )
+            }
+        }
     }
 }
 
